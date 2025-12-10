@@ -25,7 +25,7 @@ namespace CopyFilesWPF.Presenter
 
         public void ChooseFileToButtonClick(string path)
         {
-            _mainWindowModel.FilePath.PathTo = path;
+            _mainWindowModel.FilePath.PathToFolder = path;
         }
 
         // порефакторить этот метод, убрать хардкод, разделить на более мелкие методы
@@ -33,7 +33,7 @@ namespace CopyFilesWPF.Presenter
         {
             //get path data
             _mainWindowModel.FilePath.PathFrom = _mainWindowView.MainWindowView.FromTextBox.Text;
-            _mainWindowModel.FilePath.PathTo = _mainWindowView.MainWindowView.ToTextBox.Text;
+            _mainWindowModel.FilePath.PathToFolder = _mainWindowView.MainWindowView.ToTextBox.Text;
             _mainWindowView.MainWindowView.FromTextBox.Text = "";
             _mainWindowView.MainWindowView.ToTextBox.Text = "";
             _mainWindowView.MainWindowView.Height = _mainWindowView.MainWindowView.Height + 60;

@@ -4,14 +4,11 @@ namespace CopyFilesWPF.Model
 {
     public sealed record FilePath
     {
-        private string? pathTo { get; set; }
+        public string PathToFolder { get; set; } = string.Empty;
 
         public string PathFrom { get; set; } = string.Empty;
 
-        public string PathTo
-        {
-            get => pathTo + "\\" + Path.GetFileName(PathFrom);
-            set => pathTo = value;
-        }
+        public string PathTo =>
+        Path.Combine(PathToFolder, Path.GetFileName(PathFrom));
     }
 }
