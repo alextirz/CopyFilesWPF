@@ -8,7 +8,6 @@ namespace CopyFilesWPF.Model
 
         public string PathFrom { get; set; } = string.Empty;
 
-        public string PathTo =>
-        Path.Combine(PathToFolder, Path.GetFileName(PathFrom));
+        public string PathTo => Path.Combine(PathToFolder, Path.GetFileName(PathFrom));
     }
 }
