@@ -14,8 +14,12 @@ namespace CopyFilesWPF.Presenter
     {
         private readonly IMainWindowView _mainWindowView;
         private readonly MainWindowModel _mainWindowModel;
-        private const double PanelHeight = 60;
-        private const double FileNameColumnWidth = 320;
+        private const int PanelHeight = 60;
+        private const int FileNameColumnWidth = 320;
+        private const int FileNameColumnHeight = 20;
+        public const string PauseButtonName = "Pause"; 
+        public const string CancelButtonName = "Pause";
+        public const string ResumeButtonName = "Resume";
 
         public MainWindowPresenter(IMainWindowView mainWindowView) {
             _mainWindowView = mainWindowView;
@@ -35,20 +39,15 @@ namespace CopyFilesWPF.Presenter
         // порефакторить этот метод, убрать хардкод, разделить на более мелкие методы
         public void CopyButtonClick()
         {
-          //  _mainWindowModel.FilePath.PathFrom = _mainWindowView.MainWindowView.FromTextBox.Text;
-            //_mainWindowModel.FilePath.PathToFolder = _mainWindowView.MainWindowView.ToTextBox.Text;
-           
-            var fromPath = _mainWindowModel.FilePath.PathFrom;
-            var toPath = _mainWindowModel.FilePath.PathToFolder;
-            var filePath = Path.GetFileName(fromPath);
-
+            var filePath = Path.GetFileName(_mainWindowModel.FilePath.PathFrom);
             _mainWindowView.ClearPaths();
 
-            Grid panel = CreateProgressPanel(_mainWindowView);
-            CreateTextBlock(filePath, panel);
-            CreateProgressBar(panel);
-            var pauseButton = CreateButton(panel, "Pause", 1);
-            var cancelButton = CreateButton(panel, "Cancel", 2);
+            Grid panel = _mainWindowView.CreateProgressPanel(PanelHeight, FileNameColumnWidth, FileNameColumnHeight);
+            _mainWindowView.CreateTextBlock(filePath, panel);
+            _mainWindowView.CreateProgressBar(panel);
+            var pauseButton = _mainWindowView.CreateButton(panel, PauseButtonName, 1);
+            var cancelButton = _mainWindowView.CreateButton(panel, CancelButtonName, 2);
+
             pauseButton.Click += PauseCancelClick;
             cancelButton.Click += PauseCancelClick;
 
@@ -57,68 +56,14 @@ namespace CopyFilesWPF.Presenter
         }
 
 
-        private static Grid CreateProgressPanel(IMainWindowView _mainWindowView)
-        {
-            _mainWindowView.MainWindowView.Height = _mainWindowView.MainWindowView.Height + 60;
-            var newPanel = new Grid();
-            newPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(320) });
-            newPanel.ColumnDefinitions.Add(new ColumnDefinition());
-            newPanel.ColumnDefinitions.Add(new ColumnDefinition());
-            newPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(20) });
-            newPanel.RowDefinitions.Add(new RowDefinition());
-            newPanel.Height = 60;
-            DockPanel.SetDock(newPanel, Dock.Top);
-            return newPanel;
-        }
-
-        private static TextBlock CreateTextBlock(string filePath, Grid panel)
-        {
-            // File name TextBlock
-            var fileNameText = new TextBlock
-            {
-                Text = Path.GetFileName(filePath),
-                Margin = new Thickness(5, 0, 5, 0)
-            };
-            Grid.SetRow(fileNameText, 0);
-            Grid.SetColumn(fileNameText, 0);
-            panel.Children.Add(fileNameText);
-            return fileNameText;
-        }
-
-        private static ProgressBar CreateProgressBar(Grid panel)
-        {
-            var progressBar = new ProgressBar
-            {
-                Margin = new Thickness(10)
-            };
-            Grid.SetRow(progressBar, 1);
-            panel.Children.Add(progressBar);
-            return progressBar;
-        }
-
-        private Button CreateButton(Grid panel, string text, int column)
-        {
-            var button = new Button
-            {
-                Content = text,
-                Margin = new Thickness(5),
-                Tag = panel
-            };
-      
-            Grid.SetRow(button, 1);
-            Grid.SetColumn(button, column);
-            panel.Children.Add(button);
-            return button;
-        }
-
         // порефакторить этот метод, убрать хардкод, и переделать его по SOLID (тут несколько ответсвенностей)
         private void PauseCancelClick(object sender, RoutedEventArgs routedEventArgs)
         {
             ((Button)sender).IsEnabled = false;
-            if(((System.Windows.Controls.Button)sender)!.Content.ToString()!.Equals("Cancel")) {
+            if(((Button)sender)!.Content.ToString()!.Equals(CancelButtonName)) {
                 ((((Button)sender).Tag as Grid)!.Tag as FileCopier)!.CancelFlag = true;
             }
-            else if (((Button)sender)!.Content.ToString()!.Equals("Pause"))
+            else if (((Button)sender)!.Content.ToString()!.Equals(PauseButtonName))
             {
                 ((((Button)sender).Tag as Grid)!.Tag as FileCopier)!.PauseFlag.Reset();
             }
@@ -133,7 +78,7 @@ namespace CopyFilesWPF.Presenter
             _mainWindowView.MainWindowView.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
                 (ThreadStart)delegate ()
                 {
-                    _mainWindowView.MainWindowView.Height = _mainWindowView.MainWindowView.Height - 60;
+                    _mainWindowView.MainWindowView.Height = _mainWindowView.MainWindowView.Height - PanelHeight;
                     _mainWindowView.MainWindowView.MainPanel.Children.Remove(panel);
                     _mainWindowView.MainWindowView.CopyButton.IsEnabled = true;
                 }
@@ -152,14 +97,14 @@ namespace CopyFilesWPF.Presenter
                         {
                             bar.Value = persentage;
                         }
-                        if (el is Button button1 && button1!.Content.ToString()!.Equals("Resume") && button1!.IsEnabled == false)
+                        if (el is Button button1 && button1!.Content.ToString()!.Equals(ResumeButtonName) && button1!.IsEnabled == false)
                         {
-                            button1.Content = "Pause";
+                            button1.Content = PauseButtonName;
                             button1.IsEnabled = true;
                         }
-                        else if (el is Button button && button!.Content.ToString()!.Equals("Pause") && button.IsEnabled == false)
+                        else if (el is Button button && button!.Content.ToString()!.Equals(PauseButtonName) && button.IsEnabled == false)
                         {
-                            button.Content = "Resume";
+                            button.Content = ResumeButtonName;
                             button.IsEnabled = true;
                         }
                     }

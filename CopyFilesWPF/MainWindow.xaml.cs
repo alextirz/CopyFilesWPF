@@ -4,6 +4,8 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
+using ProgressBar = System.Windows.Controls.ProgressBar;
+using Button = System.Windows.Controls.Button;
 
 namespace CopyFilesWPF
 {
@@ -73,63 +75,57 @@ namespace CopyFilesWPF
             MainWindowView.FromTextBox.Text = "";
             MainWindowView.ToTextBox.Text = "";
         }
-
-        public Grid CreateFilePanel(string filePath, RoutedEventHandler pauseHandler, RoutedEventHandler cancelHandler)
+        public Grid CreateProgressPanel(int height, int gridWidth, int gridHeight)
         {
-            const double panelHeight = 60;
-            const double fileNameColumnWidth = 320;
+            MainWindowView.Height = MainWindowView.Height + height;
+            var newPanel = new Grid();
+            newPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(gridWidth) });
+            newPanel.ColumnDefinitions.Add(new ColumnDefinition());
+            newPanel.ColumnDefinitions.Add(new ColumnDefinition());
+            newPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(gridHeight) });
+            newPanel.RowDefinitions.Add(new RowDefinition());
+            newPanel.Height = 60;
+            DockPanel.SetDock(newPanel, Dock.Top);
+            return newPanel;
+        }
 
-            var panel = new Grid { Height = panelHeight };
-
-            // Columns
-            panel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(fileNameColumnWidth) });
-            panel.ColumnDefinitions.Add(new ColumnDefinition());
-            panel.ColumnDefinitions.Add(new ColumnDefinition());
-
-            // Rows
-            panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            panel.RowDefinitions.Add(new RowDefinition());
-
-            // File name
-            var fileNameText = new TextBlock
+        public TextBlock CreateTextBlock(string filePath, Grid panel)
+        {
+            var fileNameTextBlock = new TextBlock
             {
                 Text = Path.GetFileName(filePath),
                 Margin = new Thickness(5, 0, 5, 0)
             };
-            Grid.SetRow(fileNameText, 0);
-            Grid.SetColumn(fileNameText, 0);
-            panel.Children.Add(fileNameText);
+            Grid.SetRow(fileNameTextBlock, 0);
+            Grid.SetColumn(fileNameTextBlock, 0);
+            panel.Children.Add(fileNameTextBlock);
+            return fileNameTextBlock;
+        }
 
-            // Progress bar
-            var progressBar = new System.Windows.Controls.ProgressBar { Margin = new Thickness(10) };
+        public ProgressBar CreateProgressBar(Grid panel)
+        {
+            var progressBar = new ProgressBar
+            {
+                Margin = new Thickness(10)
+            };
             Grid.SetRow(progressBar, 1);
-            Grid.SetColumn(progressBar, 0);
-            Grid.SetColumnSpan(progressBar, 3);
             panel.Children.Add(progressBar);
+            return progressBar;
+        }
 
-            // Pause button
-            var pauseButton = new System.Windows.Controls.Button
+        public Button CreateButton(Grid panel, string text, int column)
+        {
+            var button = new Button
             {
-                Content = "Pause",
-                Margin = new Thickness(5)
+                Content = text,
+                Margin = new Thickness(5),
+                Tag = panel
             };
-            pauseButton.Click += pauseHandler;
-            Grid.SetRow(pauseButton, 1);
-            Grid.SetColumn(pauseButton, 1);
-            panel.Children.Add(pauseButton);
 
-            // Cancel button
-            var cancelButton = new System.Windows.Controls.Button
-            {
-                Content = "Cancel",
-                Margin = new Thickness(5)
-            };
-            cancelButton.Click += cancelHandler;
-            Grid.SetRow(cancelButton, 1);
-            Grid.SetColumn(cancelButton, 2);
-            panel.Children.Add(cancelButton);
-
-            return panel;
+            Grid.SetRow(button, 1);
+            Grid.SetColumn(button, column);
+            panel.Children.Add(button);
+            return button;
         }
     }
 }

@@ -9,6 +9,9 @@ namespace CopyFilesWPF.View
 
         void AddFilePanel(Grid filePanel);
         void ClearPaths();
-        public Grid CreateFilePanel(string filePath, RoutedEventHandler pauseHandler, RoutedEventHandler cancelHandler);
+        public Grid CreateProgressPanel(int height, int gridWidth, int gridHeight);
+        TextBlock CreateTextBlock(string filePath, Grid panel);
+        ProgressBar CreateProgressBar(Grid panel);
+        Button CreateButton(Grid panel, string v1, int v2);
     }
 }
