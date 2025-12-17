@@ -18,7 +18,7 @@ namespace CopyFilesWPF.Presenter
         private const int FileNameColumnWidth = 320;
         private const int FileNameColumnHeight = 20;
         public const string PauseButtonName = "Pause"; 
-        public const string CancelButtonName = "Pause";
+        public const string CancelButtonName = "Cancel";
         public const string ResumeButtonName = "Resume";
 
         public MainWindowPresenter(IMainWindowView mainWindowView) {
@@ -35,42 +35,60 @@ namespace CopyFilesWPF.Presenter
         {
             _mainWindowModel.FilePath.PathToFolder = path;
         }
-
-        // порефакторить этот метод, убрать хардкод, разделить на более мелкие методы
         public void CopyButtonClick()
         {
-            var filePath = Path.GetFileName(_mainWindowModel.FilePath.PathFrom);
+            var fileName = Path.GetFileName(_mainWindowModel.FilePath.PathFrom);
+
             _mainWindowView.ClearPaths();
 
-            Grid panel = _mainWindowView.CreateProgressPanel(PanelHeight, FileNameColumnWidth, FileNameColumnHeight);
-            _mainWindowView.CreateTextBlock(filePath, panel);
+            var panel = CreatePanelWithControls(fileName);
+
+            _mainWindowView.AddFilePanel(panel);
+
+            _mainWindowModel.CopyFile(ProgressChanged, OnCopyComplete, panel);
+        }
+
+        private Grid CreatePanelWithControls(string fileName)
+        {
+            var panel = _mainWindowView.CreateProgressPanel(
+                PanelHeight,
+                FileNameColumnWidth,
+                FileNameColumnHeight);
+
+            _mainWindowView.CreateTextBlock(fileName, panel);
             _mainWindowView.CreateProgressBar(panel);
+
             var pauseButton = _mainWindowView.CreateButton(panel, PauseButtonName, 1);
             var cancelButton = _mainWindowView.CreateButton(panel, CancelButtonName, 2);
 
             pauseButton.Click += PauseCancelClick;
             cancelButton.Click += PauseCancelClick;
 
-            _mainWindowView.AddFilePanel(panel);
-            _mainWindowModel.CopyFile(ProgressChanged, OnCopyComplete, panel);
+            return panel;
         }
 
 
-        // порефакторить этот метод, убрать хардкод, и переделать его по SOLID (тут несколько ответсвенностей)
-        private void PauseCancelClick(object sender, RoutedEventArgs routedEventArgs)
+        private void PauseCancelClick(object sender, RoutedEventArgs e)
         {
-            ((Button)sender).IsEnabled = false;
-            if(((Button)sender)!.Content.ToString()!.Equals(CancelButtonName)) {
-                ((((Button)sender).Tag as Grid)!.Tag as FileCopier)!.CancelFlag = true;
-            }
-            else if (((Button)sender)!.Content.ToString()!.Equals(PauseButtonName))
+            var button = (Button)sender;
+            button.IsEnabled = false;
+
+            var panel = (Grid)button.Tag;
+            var copier = (FileCopier)panel.Tag;
+
+            if (button.Content.Equals(CancelButtonName))
             {
-                ((((Button)sender).Tag as Grid)!.Tag as FileCopier)!.PauseFlag.Reset();
+                copier.CancelFlag = true;
+                return;
             }
-            else
+
+            if (button.Content.Equals(PauseButtonName))
             {
-                ((((Button)sender).Tag as Grid)!.Tag as FileCopier)!.PauseFlag.Set();
+                copier.PauseFlag.Reset();
+                return;
             }
+
+            copier.PauseFlag.Set();
         }
 
         private void OnCopyComplete(Grid panel)
@@ -85,31 +103,48 @@ namespace CopyFilesWPF.Presenter
             );
         }
 
-        // порефакторить этот метод, убрать хардкод, и переделать его по SOLID (тут несколько ответсвенностей)
-        private void ProgressChanged(double persentage, ref bool cancelFlag, Grid panel)
+        private void ProgressChanged(double percentage, ref bool cancelFlag, Grid panel)
         {
-            _mainWindowView.MainWindowView.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
-                (ThreadStart)delegate ()
+            _mainWindowView.MainWindowView.Dispatcher.BeginInvoke(
+                DispatcherPriority.Normal,
+                (ThreadStart)(() =>
                 {
-                    foreach (var el in panel.Children)
+                    UpdateProgress(panel, percentage);
+                    UpdatePauseButton(panel);
+                }));
+        }
+        private static void UpdateProgress(Grid panel, double percentage)
+        {
+            foreach (var element in panel.Children)
+            {
+                if (element is ProgressBar bar)
+                {
+                    bar.Value = percentage;
+                    return;
+                }
+            }
+        }
+
+        private void UpdatePauseButton(Grid panel)
+        {
+            foreach (var element in panel.Children)
+            {
+                if (element is Button button && !button.IsEnabled)
+                {
+                    if (button.Content.Equals(PauseButtonName))
                     {
-                        if (el is ProgressBar bar)
-                        {
-                            bar.Value = persentage;
-                        }
-                        if (el is Button button1 && button1!.Content.ToString()!.Equals(ResumeButtonName) && button1!.IsEnabled == false)
-                        {
-                            button1.Content = PauseButtonName;
-                            button1.IsEnabled = true;
-                        }
-                        else if (el is Button button && button!.Content.ToString()!.Equals(PauseButtonName) && button.IsEnabled == false)
-                        {
-                            button.Content = ResumeButtonName;
-                            button.IsEnabled = true;
-                        }
+                        button.Content = ResumeButtonName;
+                        button.IsEnabled = true;
+                    }
+                    else if (button.Content.Equals(ResumeButtonName))
+                    {
+                        button.Content = PauseButtonName;
+                        button.IsEnabled = true;
                     }
                 }
-            );
+            }
         }
+
+
     }
 }
